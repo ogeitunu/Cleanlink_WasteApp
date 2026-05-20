@@ -13,19 +13,38 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import * as Location from 'expo-location';
 
 export default function CollectorVerification1() {
   const router = useRouter();
   const { user } = useAuth();
+
   const [nin, setNin] = useState('');
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getCurrentLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        setError('Location permission denied');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      setAddress(`${location.coords.latitude}, ${location.coords.longitude}`);
+    } catch (error) {
+      setError('Failed to get current location');
+    }
+  };
+
   const handleContinue = async () => {
     try {
       setError('');
-      if (!nin || !address) {
+
+      if (!nin.trim() || !address.trim()) {
         setError('Please fill in all fields');
         return;
       }
@@ -35,15 +54,22 @@ export default function CollectorVerification1() {
       if (!user) throw new Error('User not found');
 
       const { error: updateError } = await supabase
-        .from('users')
-        .update({ nin, verified: false })
-        .eq('id', user.id);
+  .from('collector_profiles')
+  .upsert({
+    user_id: user.id,
+    nin,
+    address,
+    verified: false,
+    verification_step: 1,
+  });
 
       if (updateError) throw updateError;
 
       router.push('/onboarding/collector-verification-2');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save information');
+      setError(
+        err instanceof Error ? err.message : 'Failed to save information'
+      );
     } finally {
       setLoading(false);
     }
@@ -54,61 +80,65 @@ export default function CollectorVerification1() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+
         <View style={styles.header}>
-          <View style={styles.stepBadge}>
-            <Text style={styles.stepText}>Step 1</Text>
-          </View>
           <Text style={styles.title}>Collector Verification</Text>
-          <Text style={styles.subtitle}>Provide your identification details</Text>
+          <Text style={styles.subtitle}>
+            Provide your identification details
+          </Text>
         </View>
 
         <View style={styles.form}>
-          {error && <Text style={styles.errorText}>{error}</Text>}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>National ID Number (NIN)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your NIN"
-              value={nin}
-              onChangeText={setNin}
-              editable={!loading}
-              keyboardType="numeric"
-            />
-          </View>
+          {error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : null}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Enter your address"
-              value={address}
-              onChangeText={setAddress}
-              editable={!loading}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter NIN"
+            value={nin}
+            onChangeText={setNin}
+            keyboardType="numeric"
+          />
+
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Enter Address"
+            value={address}
+            onChangeText={setAddress}
+            multiline
+          />
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={styles.button}
+            onPress={getCurrentLocation}
+          >
+            <Text style={styles.buttonText}>
+              Use Current Location
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.button}
             onPress={handleContinue}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.buttonText}>Continue</Text>
             )}
           </TouchableOpacity>
+
         </View>
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
+  
 const styles = StyleSheet.create({
   container: {
     flex: 1,

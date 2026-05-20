@@ -11,11 +11,11 @@ export default function Home() {
     if (!loading) {
       if (session && user) {
         if (user.role === 'collector') {
-          router.replace('/(app)/dashboard');
+          router.replace('/dashboard');
         } else if (user.role === 'resident') {
-          router.replace('/(app)/request-pickup');
+          router.replace('/request-pickup');
         } else {
-          router.replace('/(app)/admin');
+          router.replace('/admin');
         }
       } else {
         router.replace('/auth/welcome');
