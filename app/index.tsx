@@ -11,7 +11,7 @@ export default function Home() {
     if (!loading) {
       if (session && user) {
         if (user.role === 'collector') {
-          router.replace('/dashboard');
+          router.replace('/dashboard')
         } else if (user.role === 'resident') {
           router.replace('/request-pickup');
         } else {

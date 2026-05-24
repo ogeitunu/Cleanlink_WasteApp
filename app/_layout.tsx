@@ -1,31 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import SplashScreen from '@/app/splash';
+import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider } from '@/context/AuthContext';
 
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
-  useFrameworkReady();
-  const [showSplash, setShowSplash] = useState(true);
-
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2000);
+    const prepare = async () => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } finally {
+        await SplashScreen.hideAsync();
+      }
+    };
 
-    return () => clearTimeout(timer);
+    prepare();
   }, []);
-
-  if (showSplash) {
-    return <SplashScreen />;
-  }
 
   return (
     <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="+not-found" />
-      </Stack>
+      <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="auto" />
     </AuthProvider>
   );

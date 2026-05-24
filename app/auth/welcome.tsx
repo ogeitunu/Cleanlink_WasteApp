@@ -8,7 +8,7 @@ export default function Welcome() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Image
-          source={require('@/assets/images/IMG-20260424-WA0005.jpg')}
+          source={require('@/assets/images/logo.jpg')}
           style={styles.logo}
           resizeMode="contain"
         />
