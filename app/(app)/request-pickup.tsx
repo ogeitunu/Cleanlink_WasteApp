@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,20 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Picker,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import * as Location from 'expo-location';
+import { MapPin, Navigation } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { colors, spacing } from '@/constants/assets';
+
+const WASTE_TYPES = [
+  { label: 'Mixed Waste', value: 'mixed', price: 50 },
+  { label: 'Recyclable', value: 'recyclable', price: 75 },
+  { label: 'Organic', value: 'organic', price: 40 },
+  { label: 'Hazardous', value: 'hazardous', price: 100 },
+];
 
 export default function RequestPickup() {
   const { user } = useAuth();
@@ -24,6 +34,46 @@ export default function RequestPickup() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [locationLoading, setLocationLoading] = useState(false);
+
+  const estimatedPrice = WASTE_TYPES.find((w) => w.value === wasteType)?.price || 50;
+
+  const getCurrentLocation = async () => {
+    try {
+      setLocationLoading(true);
+      setError('');
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError('Location permission denied');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      setLatitude(location.coords.latitude.toFixed(4));
+      setLongitude(location.coords.longitude.toFixed(4));
+
+      // Try to get address from coordinates
+      const addresses = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (addresses.length > 0) {
+        const addr = addresses[0];
+        const fullAddress = `${addr.street}, ${addr.city}, ${addr.region}`;
+        setAddress(fullAddress);
+      }
+    } catch (err) {
+      setError('Failed to get location. Please enter manually.');
+      console.error('Location error:', err);
+    } finally {
+      setLocationLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     try {
@@ -45,6 +95,8 @@ export default function RequestPickup() {
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
         notes,
+        estimated_price: estimatedPrice,
+        request_source: 'app',
         status: 'pending',
       });
 
@@ -82,6 +134,13 @@ export default function RequestPickup() {
             <Text style={styles.successText}>Pickup request submitted successfully!</Text>
           )}
 
+          {/* Pricing Card */}
+          <View style={styles.priceCard}>
+            <Text style={styles.priceLabel}>Estimated Price</Text>
+            <Text style={styles.priceAmount}>₦{estimatedPrice.toLocaleString()}</Text>
+            <Text style={styles.priceNote}>for {WASTE_TYPES.find((w) => w.value === wasteType)?.label || wasteType}</Text>
+          </View>
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Waste Type</Text>
             <View style={styles.picker}>
@@ -90,10 +149,9 @@ export default function RequestPickup() {
                 onValueChange={setWasteType}
                 enabled={!loading}
               >
-                <Picker.Item label="Mixed Waste" value="mixed" />
-                <Picker.Item label="Recyclable" value="recyclable" />
-                <Picker.Item label="Organic" value="organic" />
-                <Picker.Item label="Hazardous" value="hazardous" />
+                {WASTE_TYPES.map((type) => (
+                  <Picker.Item key={type.value} label={type.label} value={type.value} />
+                ))}
               </Picker>
             </View>
           </View>
@@ -112,6 +170,22 @@ export default function RequestPickup() {
             />
           </View>
 
+          <View style={styles.inputGroup}>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Location</Text>
+              <TouchableOpacity
+                style={[styles.locationButton, locationLoading && styles.buttonDisabled]}
+                onPress={getCurrentLocation}
+                disabled={locationLoading}
+              >
+                <Navigation size={16} color="#FFFFFF" />
+                <Text style={styles.locationButtonText}>
+                  {locationLoading ? 'Getting location...' : 'Use Current Location'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
               <Text style={styles.label}>Latitude</Text>
@@ -120,7 +194,7 @@ export default function RequestPickup() {
                 placeholder="0.0000"
                 value={latitude}
                 onChangeText={setLatitude}
-                editable={!loading}
+                editable={!loading && !locationLoading}
                 keyboardType="decimal-pad"
               />
             </View>
@@ -132,7 +206,7 @@ export default function RequestPickup() {
                 placeholder="0.0000"
                 value={longitude}
                 onChangeText={setLongitude}
-                editable={!loading}
+                editable={!loading && !locationLoading}
                 keyboardType="decimal-pad"
               />
             </View>
@@ -172,91 +246,136 @@ export default function RequestPickup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
   },
   header: {
-    marginBottom: 30,
+    marginBottom: spacing.xl,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0B6B3A',
-    marginBottom: 8,
+    color: colors.primary,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666666',
+    color: colors.textLight,
   },
   form: {
-    gap: 18,
+    gap: spacing.lg,
   },
   inputGroup: {
-    gap: 8,
+    gap: spacing.sm,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: colors.textDark,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E0E0E0',
+    borderColor: colors.border,
     borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     fontSize: 14,
-    color: '#1A1A1A',
+    color: colors.textDark,
   },
   textArea: {
     minHeight: 80,
-    paddingTop: 12,
+    paddingTop: spacing.md,
   },
   picker: {
     borderWidth: 1.5,
-    borderColor: '#E0E0E0',
+    borderColor: colors.border,
     borderRadius: 10,
     overflow: 'hidden',
+  },
+  priceCard: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  priceLabel: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  priceAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginTop: spacing.sm,
+  },
+  priceNote: {
+    fontSize: 12,
+    color: colors.primary,
+    marginTop: spacing.xs,
+    opacity: 0.8,
   },
   row: {
     flexDirection: 'row',
     gap: 0,
   },
   errorText: {
-    color: '#D32F2F',
+    color: colors.error,
     fontSize: 14,
     backgroundColor: '#FFEBEE',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     borderRadius: 8,
     overflow: 'hidden',
   },
   successText: {
-    color: '#0B6B3A',
+    color: colors.primary,
     fontSize: 14,
-    backgroundColor: '#E8F5EC',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     borderRadius: 8,
     overflow: 'hidden',
   },
   button: {
-    backgroundColor: '#0B6B3A',
-    paddingVertical: 14,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.lg,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: spacing.md,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 16,
+    fontWeight: '600',
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+  },
+  locationButtonText: {
+    color: colors.white,
+    fontSize: 12,
     fontWeight: '600',
   },
 });

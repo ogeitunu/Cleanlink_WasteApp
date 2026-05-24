@@ -1,7 +1,10 @@
 import { Tabs } from 'expo-router';
-import { Briefcase, MapPin, User } from 'lucide-react-native';
+import { Briefcase, MapPin, User, Bell } from 'lucide-react-native';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function AppLayout() {
+  const { unreadCount } = useNotifications();
+
   return (
     <Tabs
       screenOptions={{
@@ -23,6 +26,17 @@ export default function AppLayout() {
           tabBarIcon: ({ color, size }) => (
             <Briefcase size={size} color={color} strokeWidth={1.5} />
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          tabBarIcon: ({ color, size }) => (
+            <Bell size={size} color={color} strokeWidth={1.5} />
+          ),
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
         }}
       />
 

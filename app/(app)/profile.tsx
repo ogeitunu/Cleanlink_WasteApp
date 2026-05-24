@@ -143,7 +143,7 @@ export default function Profile() {
         <View style={styles.infoItem}>
           <Text style={styles.infoLabel}>Role</Text>
           <Text style={styles.infoValue}>
-            {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
+            {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Not set'}
           </Text>
         </View>
 

@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Clock, CheckCircle2, AlertCircle } from 'lucide-react-native';
+import WasteTagModal from '@/components/WasteTagModal';
 
 interface Job {
   id: string;
@@ -29,6 +30,8 @@ export default function Dashboard() {
   const [jobs, setJobs] = useState<{ title: string; data: Job[] }[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [wasteTagModalVisible, setWasteTagModalVisible] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJobs();
@@ -124,27 +127,37 @@ export default function Dashboard() {
     }
   };
 
-  const handleCompleteJob = async (jobId: string) => {
-    if (!user) return;
+  const handleCompleteJobWithTags = (jobId: string) => {
+    setSelectedJobId(jobId);
+    setWasteTagModalVisible(true);
+  };
+
+  const handleWasteTagSubmit = async (tags: string[]) => {
+    if (!user || !selectedJobId) return;
+
     try {
       const { error: updateError } = await supabase
         .from('jobs')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .eq('id', jobId);
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          waste_tags: tags,
+        })
+        .eq('id', selectedJobId);
 
       if (updateError) throw updateError;
 
       const { data: jobData } = await supabase
         .from('jobs')
         .select('*')
-        .eq('id', jobId)
+        .eq('id', selectedJobId)
         .single();
 
       if (jobData) {
-        const amount = jobData.waste_type === 'recyclable' ? 50 : 30;
+        const amount = jobData.estimated_price || (jobData.waste_type === 'recyclable' ? 50 : 30);
 
         const { error: paymentError } = await supabase.from('payments').insert({
-          job_id: jobId,
+          job_id: selectedJobId,
           collector_id: user.id,
           amount,
           status: 'pending',
@@ -152,12 +165,12 @@ export default function Dashboard() {
 
         if (paymentError) throw paymentError;
 
-        if (jobData.waste_type === 'recyclable') {
+        if (tags.includes('Recyclable') || jobData.waste_type === 'recyclable') {
           await supabase.from('rewards').insert({
             user_id: user.id,
             points: 10,
             type: 'earned',
-            job_id: jobId,
+            job_id: selectedJobId,
           });
         }
       }
@@ -203,10 +216,20 @@ export default function Dashboard() {
   }
 
   return (
-    <SectionList
-      sections={jobs.length > 0 ? jobs : [{ title: 'No Jobs Available', data: [] }]}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
+    <>
+      <WasteTagModal
+        visible={wasteTagModalVisible}
+        onClose={() => {
+          setWasteTagModalVisible(false);
+          setSelectedJobId(null);
+        }}
+        onSubmit={handleWasteTagSubmit}
+        jobId={selectedJobId || ''}
+      />
+      <SectionList
+        sections={jobs.length > 0 ? jobs : [{ title: 'No Jobs Available', data: [] }]}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
         <View style={styles.jobCard}>
           <View style={styles.cardHeader}>
             <View style={styles.statusBadge}>
@@ -235,7 +258,7 @@ export default function Dashboard() {
             {item.status === 'accepted' && (
               <TouchableOpacity
                 style={styles.completeButton}
-                onPress={() => handleCompleteJob(item.id)}
+                onPress={() => handleCompleteJobWithTags(item.id)}
               >
                 <Text style={styles.completeButtonText}>Complete Job</Text>
               </TouchableOpacity>
@@ -261,7 +284,8 @@ export default function Dashboard() {
           fetchJobs();
         }} />
       }
-    />
+      />
+    </>
   );
 }
 
