@@ -1,10 +1,9 @@
 {
   "expo": {
-    "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
+    "name": "Cleanlinka",
+    "slug": "cleanlinka",
     "version": "1.0.0",
     "orientation": "portrait",
-     "image": "./assets/images/logo.jpg",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -35,10 +34,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "5366d747-10c4-422e-bdcd-99e9137608a4"
-      }
+      "router": {}
     },
     "owner": "fog1"
   }
