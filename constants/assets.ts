@@ -2,12 +2,12 @@
 // This ensures all assets are properly typed and imported
 
 export const images = {
-  logo: require('@/assets/images/IMG-20260424-WA0005.jpg'),
-  emptyBox: require('@/assets/images/IMG-20260424-WA0005.jpg'), // Fallback to logo
-  noData: require('@/assets/images/IMG-20260424-WA0005.jpg'),
-  avatar: require('@/assets/images/IMG-20260424-WA0005.jpg'),
-  wasteBin: require('@/assets/images/IMG-20260424-WA0005.jpg'),
-  recycle: require('@/assets/images/IMG-20260424-WA0005.jpg'),
+  logo: require('@/assets/images/logo.jpg'),
+  emptyBox: require('@/assets/images/logo.jpg'), // Fallback to logo
+  noData: require('@/assets/images/logo.jpg'),
+  avatar: require('@/assets/images/logo.jpg'),
+  wasteBin: require('@/assets/images/logo.jpg'),
+  recycle: require('@/assets/images/logo.jpg'),
 };
 
 // Placeholder animations - using color indicators instead
