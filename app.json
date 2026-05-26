@@ -34,7 +34,10 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "6e26b4f5-f38b-457d-b437-6059249d00c0"
+      }
     },
     "owner": "fog1"
   }
