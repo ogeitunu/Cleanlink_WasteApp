@@ -6,7 +6,11 @@
     "orientation": "portrait",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+
+    "newArchEnabled": false,
+
+    "jsEngine": "hermes",
+
     "android": {
       "permissions": [
         "ACCESS_FINE_LOCATION",
@@ -14,31 +18,37 @@
       ],
       "package": "com.cleanlinka.app"
     },
+
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to verify your address during onboarding."
       }
     },
+
     "web": {
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/images/favicon.jpg"
     },
+
     "plugins": [
       "expo-router",
       "expo-font",
       "expo-web-browser"
     ],
+
     "experiments": {
       "typedRoutes": true
     },
+
     "extra": {
       "router": {},
       "eas": {
         "projectId": "6e26b4f5-f38b-457d-b437-6059249d00c0"
       }
     },
+
     "owner": "fog1"
   }
 }
