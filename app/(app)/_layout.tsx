@@ -1,9 +1,9 @@
 import { Tabs } from 'expo-router';
 import { Briefcase, MapPin, User, Bell } from 'lucide-react-native';
-import { useNotifications } from '@/hooks/useNotifications';
 
 export default function AppLayout() {
-  const { unreadCount } = useNotifications();
+  // SAFE fallback (NO hooks in layout)
+  const unreadCount = 0;
 
   return (
     <Tabs

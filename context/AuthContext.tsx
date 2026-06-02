@@ -32,6 +32,7 @@ interface AuthContextType {
   ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,7 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  //  Fetch or create profile safely
+  // =========================
+  // FETCH OR CREATE PROFILE
+  // =========================
   const fetchUserProfile = async (authId: string) => {
     try {
       const { data, error } = await supabase
@@ -52,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      // ✅ FIX: if profile doesn't exist, create it
+      // If no profile exists → create one
       if (!data) {
         const { data: authUser } = await supabase.auth.getUser();
 
@@ -80,84 +83,108 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error fetching user profile:', error);
       setUser(null);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // 🔄 Init session + auth listener
+  // =========================
+  // INIT AUTH + LISTENER
+  // =========================
   useEffect(() => {
-    const init = async () => {
-      const { data } = await supabase.auth.getSession();
+    let isMounted = true;
 
-      const session = data.session;
-      setSession(session);
+    const initAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
 
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-      } else {
+        if (error) throw error;
+
+        if (!isMounted) return;
+
+        const currentSession = data.session;
+        setSession(currentSession);
+
+        if (currentSession?.user) {
+          await fetchUserProfile(currentSession.user.id);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error('Auth init error:', err);
+        setSession(null);
         setUser(null);
-        setLoading(false);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
-    init();
+    initAuth();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
+      try {
+        if (!isMounted) return;
 
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-      } else {
+        setSession(session);
+
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error('Auth state error:', err);
         setUser(null);
-        setLoading(false);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  //  SIGN UP
+  // =========================
+  // SIGN UP
+  // =========================
   const signUp = async (
     email: string,
     password: string,
     userData: Partial<User>
   ) => {
     setLoading(true);
+
     try {
-      const { data: authData, error: authError } =
-        await supabase.auth.signUp({
-          email,
-          password,
-        });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-      if (authError) throw authError;
-      if (!authData.user)
-        throw new Error('No user returned from signup');
+      if (error) throw error;
+      if (!data.user) throw new Error('Signup failed');
 
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          auth_id: authData.user.id,
-          email,
-          full_name: userData.full_name || '',
-          phone: userData.phone || null,
-          nin: userData.nin || null,
-          role: userData.role || 'resident',
-          verified: false,
-        });
-
-      if (profileError) throw profileError;
+      await supabase.from('users').insert({
+        auth_id: data.user.id,
+        email,
+        full_name: userData.full_name || '',
+        phone: userData.phone || null,
+        nin: userData.nin || null,
+        role: userData.role || 'resident',
+        verified: false,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  //  SIGN IN
+  // =========================
+  // SIGN IN
+  // =========================
   const signIn = async (email: string, password: string) => {
     setLoading(true);
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -170,9 +197,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  //  SIGN OUT
+  // =========================
+  // SIGN OUT
+  // =========================
   const signOut = async () => {
     setLoading(true);
+
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -183,17 +213,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   };
+  // =========================
+// RESET PASSWORD 
+// =========================
+const resetPassword = async (email: string): Promise<void> => {
+  setLoading(true);
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+
+    if (error) throw error;
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <AuthContext.Provider
-      value={{ session, user, loading, signUp, signIn, signOut }}
+      value={{ session, user, loading, signUp, signIn, signOut, resetPassword }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
 
-// Hook
+// =========================
+// HOOK
+// =========================
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

@@ -8,15 +8,26 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   useEffect(() => {
+    let isMounted = true;
+
     const prepare = async () => {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        // keep splash for minimum time (optional UX delay)
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      } catch (error) {
+        console.warn('Splash preparation error:', error);
       } finally {
-        await SplashScreen.hideAsync();
+        if (isMounted) {
+          await SplashScreen.hideAsync();
+        }
       }
     };
 
     prepare();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

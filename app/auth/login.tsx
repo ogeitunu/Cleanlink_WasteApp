@@ -180,4 +180,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  forgotPassword: {
+  color: '#0B6B3A',
+  fontSize: 13,
+  fontWeight: '600',
+  marginTop: 5,
+},
 });

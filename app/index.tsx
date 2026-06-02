@@ -8,20 +8,25 @@ export default function Home() {
   const { session, user, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading) {
-      if (session && user) {
-        if (user.role === 'collector') {
-          router.replace('/dashboard')
-        } else if (user.role === 'resident') {
-          router.replace('/request-pickup');
-        } else {
-          router.replace('/admin');
-        }
-      } else {
-        router.replace('/auth/welcome');
-      }
+    if (loading) return;
+
+    // No session → go to auth
+    if (!session || !user) {
+      router.replace('/auth/welcome');
+      return;
     }
-  }, [loading, session, user]);
+
+    // Safe role handling
+    const role = user?.role;
+
+    if (role === 'collector') {
+      router.replace('/dashboard');
+    } else if (role === 'resident') {
+      router.replace('/request-pickup');
+    } else {
+      router.replace('/admin');
+    }
+  }, [loading, session, user, router]);
 
   return (
     <View style={styles.container}>
