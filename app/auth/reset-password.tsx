@@ -10,17 +10,16 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState('');
 
    useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
+  const checkSession = async () => {
+    const { data } = await supabase.auth.getSession();
 
-      if (!data.session) {
-        console.log('No active reset session');
-      }
-    };
+    if (!data.session) {
+      console.log('No active reset session');
+    }
+  };
 
-    checkSession();
-  }, []);
-
+  checkSession();
+}, []);
 
   const handleUpdate = async () => {
   if (!password || !confirm) {
