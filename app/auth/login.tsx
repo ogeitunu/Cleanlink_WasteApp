@@ -73,6 +73,14 @@ export default function Login() {
               secureTextEntry
             />
           </View>
+        <TouchableOpacity
+          onPress={() => router.push('/auth/forgot-password')}
+          style={{ alignSelf: 'flex-end', marginTop: 5 }}
+          >
+          <Text style={styles.forgotPassword}>
+          Forgot Password?
+          </Text>
+        </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}

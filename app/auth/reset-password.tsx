@@ -2,40 +2,63 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, Alert, StyleSheet } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 
 export default function ResetPassword() {
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
 
+   useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+
+      if (!data.session) {
+        console.log('No active reset session');
+      }
+    };
+
+    checkSession();
+  }, []);
+
+
   const handleUpdate = async () => {
-    if (!password || !confirm) {
-      Alert.alert('Error', 'Fill all fields');
+  if (!password || !confirm) {
+    Alert.alert('Error', 'Fill all fields');
+    return;
+  }
+
+  if (password !== confirm) {
+    Alert.alert('Error', 'Passwords do not match');
+    return;
+  }
+
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+
+    if (!sessionData.session) {
+      Alert.alert(
+        'Session Expired',
+        'Please request a new password reset link'
+      );
       return;
     }
 
-    if (password !== confirm) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
 
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password,
-      });
+    if (error) throw error;
 
-      if (error) throw error;
+    Alert.alert('Success', 'Password updated successfully');
 
-      Alert.alert('Success', 'Password updated successfully');
+    await supabase.auth.signOut();
 
-      await supabase.auth.signOut();
-
-      router.replace('/auth/welcome');
-    } catch (err: any) {
-      Alert.alert('Error', err.message);
-    }
-  };
-
+    router.replace('/auth/login');
+  } catch (err: any) {
+    Alert.alert('Error', err.message);
+  }
+};
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Reset Password</Text>

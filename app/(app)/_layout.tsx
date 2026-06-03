@@ -60,12 +60,6 @@ export default function AppLayout() {
         }}
       />
 
-      <Tabs.Screen
-        name="admin"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
   );
 }
