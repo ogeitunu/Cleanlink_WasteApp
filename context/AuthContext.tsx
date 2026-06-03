@@ -5,8 +5,8 @@ import {
   useState,
   ReactNode,
 } from 'react';
-import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { Session, AuthChangeEvent } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -121,24 +121,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        if (!isMounted) return;
+    } = supabase.auth.onAuthStateChange(
+  async (event: AuthChangeEvent, session: Session | null) => {
+    try {
+      if (!isMounted) return;
 
-        setSession(session);
+      setSession(session);
 
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setUser(null);
-        }
-      } catch (err) {
-        console.error('Auth state error:', err);
-        setUser(null);
-      } finally {
-        if (isMounted) setLoading(false);
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('Recovery mode activated');
       }
-    });
+
+      if (session?.user) {
+        await fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      console.error('Auth state error:', err);
+      setUser(null);
+    } finally {
+      if (isMounted) setLoading(false);
+    }
+  }
+);
 
     return () => {
       isMounted = false;
