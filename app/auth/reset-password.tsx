@@ -6,8 +6,11 @@ import { useEffect } from 'react';
 
 export default function ResetPassword() {
   const router = useRouter();
+
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+
+  const [loading, setLoading] = useState(false);
 
    useEffect(() => {
   const checkSession = async () => {
@@ -34,14 +37,6 @@ export default function ResetPassword() {
 
   try {
     const { data: sessionData } = await supabase.auth.getSession();
-
-    if (!sessionData.session) {
-      Alert.alert(
-        'Session Expired',
-        'Please request a new password reset link'
-      );
-      return;
-    }
 
     const { error } = await supabase.auth.updateUser({
       password,

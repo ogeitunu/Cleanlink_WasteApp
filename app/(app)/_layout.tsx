@@ -1,5 +1,10 @@
 import { Tabs } from 'expo-router';
 import { Briefcase, MapPin, User, Bell } from 'lucide-react-native';
+import * as Linking from 'expo-linking';
+
+const linking = {
+  prefixes: [Linking.createURL('')], // Adjust the prefix as needed
+};
 
 export default function AppLayout() {
   // SAFE fallback (NO hooks in layout)
