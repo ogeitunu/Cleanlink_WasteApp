@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cleanlinka",
     "slug": "cleanlinka",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
@@ -14,7 +14,8 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
       ],
-      "package": "com.cleanlinka.app"
+      "package": "com.cleanlinka.app",
+      "versionCode": 2
     },
 
     "ios": {
