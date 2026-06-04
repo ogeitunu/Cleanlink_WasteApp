@@ -1,37 +1,32 @@
-import 'react-native-reanimated'; // ✅ ADDED (IMPORTANT FIX)
+import 'react-native-reanimated';
 
-import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { AuthProvider } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
-    let isMounted = true;
-
-    const prepare = async () => {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-      } finally {
-        if (isMounted) {
-          await SplashScreen.hideAsync();
-        }
-      }
+    const init = async () => {
+      await new Promise((r) => setTimeout(r, 800));
+      setReady(true);
+      await SplashScreen.hideAsync();
     };
 
-    prepare();
-
-    return () => {
-      isMounted = false;
-    };
+    init();
   }, []);
 
+  if (!ready) return null;
+
   return (
-    <>
+    <AuthProvider>
       <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="auto" />
-    </>
+    </AuthProvider>
   );
 }

@@ -39,41 +39,57 @@ export default function RequestPickup() {
   const estimatedPrice = WASTE_TYPES.find((w) => w.value === wasteType)?.price || 50;
 
   const getCurrentLocation = async () => {
-    try {
-      setLocationLoading(true);
-      setError('');
+  try {
+    setLocationLoading(true);
+    setError('');
 
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setError('Location permission denied');
-        return;
-      }
+    const { status } = await Location.requestForegroundPermissionsAsync();
 
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
-      setLatitude(location.coords.latitude.toFixed(4));
-      setLongitude(location.coords.longitude.toFixed(4));
-
-      // Try to get address from coordinates
-      const addresses = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-
-      if (addresses.length > 0) {
-        const addr = addresses[0];
-        const fullAddress = `${addr.street}, ${addr.city}, ${addr.region}`;
-        setAddress(fullAddress);
-      }
-    } catch (err) {
-      setError('Failed to get location. Please enter manually.');
-      console.error('Location error:', err);
-    } finally {
-      setLocationLoading(false);
+    if (status !== 'granted') {
+      setError('Location permission denied');
+      return;
     }
-  };
+
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
+
+    const lat = location.coords.latitude;
+    const lng = location.coords.longitude;
+
+    setLatitude(lat.toFixed(6));
+    setLongitude(lng.toFixed(6));
+
+    const addresses = await Location.reverseGeocodeAsync({
+      latitude: lat,
+      longitude: lng,
+    });
+
+    if (addresses.length > 0) {
+      const addr = addresses[0];
+
+      const formattedAddress = [
+        addr.name,
+        addr.street,
+        addr.district,
+        addr.city,
+        addr.region,
+        addr.country,
+      ]
+        .filter(Boolean)
+        .join(', ');
+
+      setAddress(formattedAddress);
+    } else {
+      // fallback if reverse geocode fails
+      setAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+    }
+  } catch (err) {
+    setError('Failed to get location. Please enter manually.');
+  } finally {
+    setLocationLoading(false);
+  }
+};
 
   const handleSubmit = async () => {
     try {
