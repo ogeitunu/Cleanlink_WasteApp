@@ -52,7 +52,7 @@ export default function Signup() {
       if (role === 'collector') {
         router.replace('/onboarding/collector-verification-1');
       } else {
-        router.replace('/(app)/request-pickup');
+        router.replace('//request-pickup');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed');

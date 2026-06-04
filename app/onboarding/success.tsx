@@ -23,7 +23,7 @@ export default function SuccessScreen() {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.replace('/(app)/dashboard')}
+        onPress={() => router.replace('//dashboard')}
       >
         <Text style={styles.buttonText}>Start Accepting Jobs</Text>
       </TouchableOpacity>
