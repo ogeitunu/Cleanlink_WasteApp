@@ -15,7 +15,7 @@ export default function AdminScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <TouchableOpacity
           style={styles.card}
-          onPress={() => router.push('/admin/collectors')}
+          onPress={() => router.push('//collectors')}
         >
           <View style={styles.cardIcon}>
             <Users size={32} color={colors.primary} />
