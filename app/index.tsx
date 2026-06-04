@@ -1,23 +1,27 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { View, ActivityIndicator } from 'react-native';
 
-export default function Home() {
+export default function Index() {
+  const router = useRouter();
+  const { session, user, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (!session || !user) {
+      router.replace('/auth/welcome');
+      return;
+    }
+
+    // Go into TAB GROUP (IMPORTANT FIX)
+    router.replace('/(app)/dashboard');
+  }, [loading, session, user]);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>App is running 🎉</Text>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator size="large" />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  text: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0B6B3A',
-  },
-});
