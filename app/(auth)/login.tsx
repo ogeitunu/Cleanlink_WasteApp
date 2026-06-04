@@ -29,7 +29,7 @@ export default function Login() {
       }
 
       await signIn(email, password);
-      router.replace('//dashboard');
+      router.replace('/(app)/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     }
@@ -74,7 +74,7 @@ export default function Login() {
             />
           </View>
         <TouchableOpacity
-          onPress={() => router.push('/auth/forgot-password')}
+          onPress={() => router.push('/(auth)/forgot-password')}
           style={{ alignSelf: 'flex-end', marginTop: 5 }}
           >
           <Text style={styles.forgotPassword}>

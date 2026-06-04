@@ -20,7 +20,7 @@ export default function ForgotPassword() {
         'Check your email',
         'Password reset link has been sent'
       );
-      router.replace('/auth/welcome');
+      router.replace('/(auth)/welcome');
     } catch (err: any) {
       Alert.alert('Error', err.message);
     }

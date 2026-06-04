@@ -1,32 +1,33 @@
-import 'react-native-reanimated';
+import { Stack } from "expo-router";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { ActivityIndicator, View } from "react-native";
 
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { AuthProvider } from '../context/AuthContext';
-import { useEffect, useState } from 'react';
-import * as SplashScreen from 'expo-splash-screen';
+function RootNavigator() {
+  const { user, loading } = useAuth();
 
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const init = async () => {
-      await new Promise((r) => setTimeout(r, 800));
-      setReady(true);
-      await SplashScreen.hideAsync();
-    };
-
-    init();
-  }, []);
-
-  if (!ready) return null;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
+    <Stack screenOptions={{ headerShown: false }}>
+      {user ? (
+        <Stack.Screen name="(app)" />
+      ) : (
+        <Stack.Screen name="(auth)" />
+      )}
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
     <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-      <StatusBar style="auto" />
+      <RootNavigator />
     </AuthProvider>
   );
 }
