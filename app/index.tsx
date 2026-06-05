@@ -12,9 +12,9 @@ export default function Index() {
     if (loading) return;
 
     if (!user) {
-      router.replace("//login");
+      router.replace("/(auth)/login");
     } else {
-      router.replace("//dashboard");
+      router.replace("/(app)/dashboard");
     }
   }, [navState, user, loading]);
 
