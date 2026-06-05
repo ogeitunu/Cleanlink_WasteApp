@@ -1,61 +1,72 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, Alert, StyleSheet } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
 
 export default function ResetPassword() {
   const router = useRouter();
 
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-
   const [loading, setLoading] = useState(false);
+  const [isRecovery, setIsRecovery] = useState(false);
 
-   useEffect(() => {
-  const checkSession = async () => {
-    const { data } = await supabase.auth.getSession();
+  // 🔥 Detect recovery session properly
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true);
+      }
+    });
 
-    if (!data.session) {
-      console.log('No active reset session');
+    return () => {
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleUpdate = async () => {
+    if (!password || !confirm) {
+      Alert.alert('Error', 'Fill all fields');
+      return;
+    }
+
+    if (password !== confirm) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
+
+      if (error) throw error;
+
+      Alert.alert('Success', 'Password updated successfully');
+
+      await supabase.auth.signOut();
+
+      // ✅ FIXED ROUTE
+      router.replace('/(auth)/login');
+    } catch (err: any) {
+      Alert.alert('Error', err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  checkSession();
-}, []);
-
-  const handleUpdate = async () => {
-  if (!password || !confirm) {
-    Alert.alert('Error', 'Fill all fields');
-    return;
-  }
-
-  if (password !== confirm) {
-    Alert.alert('Error', 'Passwords do not match');
-    return;
-  }
-
-  try {
-    const { data: sessionData } = await supabase.auth.getSession();
-
-    const { error } = await supabase.auth.updateUser({
-      password,
-    });
-
-    if (error) throw error;
-
-    Alert.alert('Success', 'Password updated successfully');
-
-    await supabase.auth.signOut();
-
-    router.replace('/auth/login');
-  } catch (err: any) {
-    Alert.alert('Error', err.message);
-  }
-};
   return (
     <View style={styles.container}>
+
       <Text style={styles.title}>Reset Password</Text>
+
+      {!isRecovery && (
+        <Text style={{ color: 'red', marginBottom: 10 }}>
+          No reset session detected. Open this screen from your email link.
+        </Text>
+      )}
 
       <TextInput
         placeholder="New Password"
@@ -73,8 +84,14 @@ export default function ResetPassword() {
         style={styles.input}
       />
 
-      <Pressable style={styles.button} onPress={handleUpdate}>
-        <Text style={styles.buttonText}>Update Password</Text>
+      <Pressable
+        style={[styles.button, loading && { opacity: 0.6 }]}
+        onPress={handleUpdate}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? 'Updating...' : 'Update Password'}
+        </Text>
       </Pressable>
     </View>
   );
