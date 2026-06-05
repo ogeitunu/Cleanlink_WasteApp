@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, Alert, StyleSheet } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'expo-router';
+import { useRootNavigationState, useRouter } from "expo-router";
 
 export default function ResetPassword() {
   const router = useRouter();
@@ -10,6 +10,11 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
+  const navState = useRootNavigationState();
+
+useEffect(() => {
+  if (!navState?.key) return;
+}, [navState]);
 
   // 🔥 Detect recovery session properly
   useEffect(() => {
