@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
+import { supabase } from "@/lib/supabase";
 
 export default function ForgotPassword() {
   const { resetPassword } = useAuth();
@@ -19,30 +20,27 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
 
   const handleReset = async () => {
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
-      return;
-    }
+  if (!email.trim()) return;
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      await resetPassword(email);
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "myapp://auth/reset-password",
+    });
 
-      Alert.alert(
-        'Check your email',
-        'We sent you a password reset link. Open it to continue.'
-      );
+    Alert.alert(
+      "Check Email",
+      "If link fails, return to app and continue reset manually."
+    );
 
-      // ⚠️ DO NOT immediately move user away too aggressively
-      router.replace('/(auth)/login');
-
-    } catch (err: any) {
-      Alert.alert('Error', err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    router.replace("/(auth)/login");
+  } catch (err: any) {
+    Alert.alert("Error", err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 const styles = StyleSheet.create({
   container: {
     flex: 1,
