@@ -1,9 +1,25 @@
-import { View, Text } from 'react-native';
+import { useEffect } from 'react';
+import { router, useRootNavigationState } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { View, ActivityIndicator } from 'react-native';
 
 export default function Index() {
+  const navState = useRootNavigationState();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!navState?.key) return;
+    if (loading) return;
+    if (user) {
+      router.replace('/(app)/dashboard');
+    } else {
+      router.replace('/(auth)/login');
+    }
+  }, [navState, user, loading]);
+
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
-      <Text style={{ fontSize: 24, color: 'black' }}>APP WORKS</Text>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator />
     </View>
   );
 }
