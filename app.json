@@ -10,13 +10,14 @@
     "jsEngine": "hermes",
 
     "android": {
-      "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
-      ],
-      "package": "com.cleanlinka.app",
-      "versionCode": 2
-    },
+  "minSdkVersion": 23,
+  "permissions": [
+    "ACCESS_FINE_LOCATION",
+    "ACCESS_COARSE_LOCATION"
+  ],
+  "package": "com.cleanlinka.app",
+  "versionCode": 3
+},
 
     "ios": {
       "supportsTablet": true,
