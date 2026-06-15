@@ -10,7 +10,6 @@
     "jsEngine": "hermes",
 
     "android": {
-  "minSdkVersion": 23,
   "permissions": [
     "ACCESS_FINE_LOCATION",
     "ACCESS_COARSE_LOCATION"
